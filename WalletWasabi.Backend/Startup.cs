@@ -111,13 +111,6 @@ namespace WalletWasabi.Backend
 				Logger.LogInfo($"{nameof(coordinator)} is disposed.");
 			}
 
-			var indexBuilderService = global.IndexBuilderService;
-			if (indexBuilderService is { })
-			{
-				await indexBuilderService.StopAsync();
-				Logger.LogInfo($"{nameof(indexBuilderService)} is stopped.");
-			}
-
 			var hostedServices = global.HostedServices;
 			if (hostedServices is { })
 			{

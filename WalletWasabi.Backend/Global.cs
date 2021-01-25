@@ -14,7 +14,6 @@ using WalletWasabi.CoinJoin.Coordinator.Rounds;
 using WalletWasabi.Helpers;
 using WalletWasabi.Logging;
 using WalletWasabi.Services;
-using WalletWasabi.WabiSabi;
 
 namespace WalletWasabi.Backend
 {
@@ -34,10 +33,7 @@ namespace WalletWasabi.Backend
 
 		public HostedServices HostedServices { get; set; }
 
-		public IndexBuilderService IndexBuilderService { get; private set; }
-
 		public Coordinator Coordinator { get; private set; }
-		public WabiSabiCoordinator WabiSabiCoordinator { get; private set; }
 
 		public Config Config { get; private set; }
 
@@ -54,10 +50,6 @@ namespace WalletWasabi.Backend
 
 			// Make sure P2P works.
 			await InitializeP2pAsync(config.Network, config.GetBitcoinP2pEndPoint(), cancel);
-
-			CoordinatorParameters coordinatorParameters = new(DataDir);
-			WabiSabiCoordinator = new(coordinatorParameters);
-			HostedServices.Register(WabiSabiCoordinator, "WabiSabi Coordinator");
 
 			if (roundConfig.FilePath is { })
 			{
@@ -83,14 +75,8 @@ namespace WalletWasabi.Backend
 
 			await HostedServices.StartAllAsync(cancel);
 
-			// Initialize index building
-			var indexBuilderServiceDir = Path.Combine(DataDir, "IndexBuilderService");
-			var indexFilePath = Path.Combine(indexBuilderServiceDir, $"Index{RpcClient.Network}.dat");
 			var blockNotifier = HostedServices.FirstOrDefault<BlockNotifier>();
-			IndexBuilderService = new(RpcClient, blockNotifier, indexFilePath);
 			Coordinator = new(RpcClient.Network, blockNotifier, Path.Combine(DataDir, "CcjCoordinator"), RpcClient, roundConfig);
-			IndexBuilderService.Synchronize();
-			Logger.LogInfo($"{nameof(IndexBuilderService)} is successfully initialized and started synchronization.");
 
 			await Coordinator.MakeSureTwoRunningRoundsAsync();
 			Logger.LogInfo("Chaumian CoinJoin Coordinator is successfully initialized and started two new rounds.");
